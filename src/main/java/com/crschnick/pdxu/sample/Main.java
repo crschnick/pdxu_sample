@@ -25,7 +25,7 @@ public class Main {
     public static Set<String> Get_Untouchables() throws IOException, ParseException {
 
 
-        File rulers_directory = new File("%HOMEPATH%\\Documents\\Paradox Interactive\\Crusader Kings III\\rulers");
+        File rulers_directory = new File(System.getenv("USERPROFILE") + "\\Documents\\Paradox Interactive\\Crusader Kings III\\rulers");
         File[] files = rulers_directory.listFiles(File::isFile);
 
         Set<String> untouchable_names = new HashSet<>();
@@ -43,7 +43,7 @@ public class Main {
         // ####################################
         // ## get cousins and their families ##
         // ####################################
-        Path file = Path.of("%HOMEPATH%\\personal\\crusader kings scripts\\pdxu_sample\\save.ck3");
+        Path file = Path.of(System.getenv("USERPROFILE") + "\\documents\\personal\\crusader kings scripts\\pdxu_sample\\save.ck3");
 
         byte[] bytes = Files.readAllBytes(file);
         SavegameType type = SavegameType.CK3;
@@ -137,6 +137,7 @@ public class Main {
 
     public static void Randomize_DNA(Node savegameNode, Path output_file) throws IOException, ParseException {
         var untouchable_ids = Get_Untouchables();
+//        Set<String> untouchable_ids = new HashSet<>();
         var living = savegameNode.getNodeForKey("living");
         // Extract keys
         var living_people_keys = new ArrayList<String>();
@@ -145,32 +146,33 @@ public class Main {
         });
 
         Queue<String> random_dna_queue = new LinkedList<>();
-//        for(int i=0; i <living_people_keys.size(); i++){
-        for(int i=0; i <2; i++){
+        for(int i=0; i <living_people_keys.size(); i++){
+//        for(int i=0; i <2; i++){
             random_dna_queue.offer(DNA.Create_Random_DNA());
         }
 //        // Ruin their DNA... they deserve it.
-            var node_key = "18151";
-//        for (var node_key : living_people_keys) {
+//            var node_key = "18151";
+        for (var node_key : living_people_keys) {
             var character = living.getNodeForKey(node_key);
             var name = character.getNodeForKey("first_name").getString();
 
             if (!untouchable_ids.contains(node_key)){
                 System.out.println("destroying " + node_key + ", name: " + name);
                 var random_dna_string = Objects.requireNonNull(random_dna_queue.poll());
-                var randomized_dna = new ValueNode(random_dna_string, true);
-                ((SimpleArrayNode) character).replacePart(new ValueNode(randomized_dna_string, true), 0, ((SimpleArrayNode) character).size());
-
+                var randomized_dna_array_node = ArrayNode.singleKeyNode("dna", new ValueNode(random_dna_string, true));
 
                 if (character.hasKey("dna")) {
+                    var randomized_dna = new ValueNode(random_dna_string, true);;
                     var old_dna = character.getNodeForKey("dna");
                     var old_dna_string = old_dna.toString();
                     ((ValueNode) old_dna).set(randomized_dna);
                     var new_dna_string = old_dna.toString();
                 }
                 else{
-                    var x = randomized_dna.copy();
-//                    var old_dna =((SimpleArrayNode) character).splice()
+                    character = character.getArrayNode().replacePart(randomized_dna_array_node, 0, 0);
+                    var new_dna_string = character.getNodeForKey("dna").toString();
+                    living = living.getArrayNode().replaceKey(node_key, character);
+                    savegameNode = savegameNode.getArrayNode().replaceKey("living", living);
 
                 }
 
@@ -182,8 +184,8 @@ public class Main {
 //                break;
 
             }
-//        }
-//        SavegameStructure.CK3_COMPRESSED.write(output_file, new SavegameContent(Map.of("gamestate", (ArrayNode) savegameNode)));
+        }
+        SavegameStructure.CK3_COMPRESSED.write(output_file, new SavegameContent(Map.of("gamestate", (ArrayNode) savegameNode)));
 
 
 
@@ -204,8 +206,8 @@ public class Main {
 
 
 
-        Path file = Path.of("%HOMEPATH%\\personal\\crusader kings scripts\\pdxu_sample\\save.ck3");
-        Path output_file = Path.of("%HOMEPATH%\\personal\\crusader kings scripts\\pdxu_sample\\save_modified.ck3");
+        Path file = Path.of(System.getenv("USERPROFILE") + "\\documents\\personal\\crusader kings scripts\\pdxu_sample\\save.ck3");
+        Path output_file = Path.of(System.getenv("USERPROFILE") + "\\documents\\personal\\crusader kings scripts\\pdxu_sample\\save_modified.ck3");
         byte[] bytes = Files.readAllBytes(file);
         SavegameType type = SavegameType.CK3;
         SavegameStructure structure = type.determineStructure(bytes);
