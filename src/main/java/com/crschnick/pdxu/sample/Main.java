@@ -152,6 +152,7 @@ public class Main {
         }
 //        // Ruin their DNA... they deserve it.
 //            var node_key = "18151";
+        var newLivingCharacters = new ArrayList<ArrayNode>();
         for (var node_key : living_people_keys) {
             var character = living.getNodeForKey(node_key);
             var name = character.getNodeForKey("first_name").getString();
@@ -171,9 +172,6 @@ public class Main {
                 else{
                     character = character.getArrayNode().replacePart(randomized_dna_array_node, 0, 0);
                     var new_dna_string = character.getNodeForKey("dna").toString();
-                    living = living.getArrayNode().replaceKey(node_key, character);
-                    savegameNode = savegameNode.getArrayNode().replaceKey("living", living);
-
                 }
 
 
@@ -184,7 +182,12 @@ public class Main {
 //                break;
 
             }
+
+            newLivingCharacters.add(ArrayNode.singleKeyNode(node_key, character));
         }
+
+        savegameNode = savegameNode.getArrayNode().replaceKey("living", new LinkedArrayNode(newLivingCharacters));
+
         SavegameStructure.CK3_COMPRESSED.write(output_file, new SavegameContent(Map.of("gamestate", (ArrayNode) savegameNode)));
 
 
